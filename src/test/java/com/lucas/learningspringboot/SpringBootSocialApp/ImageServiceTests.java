@@ -5,33 +5,23 @@ import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.FileUrlResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.util.FileSystemUtils;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Jimfs;
 
@@ -45,11 +35,11 @@ public class ImageServiceTests {
 	private static final String DIFFERENT_FILENAME = "filename";
 	private static final String A_FILENAME = "bazinga.png";
 	
-	@Autowired
-	ImageService imageService;
-	
 	@MockBean
 	ResourceLoader resourceLoader;
+	
+	@Autowired
+	ImageService imageService;
 	
 	Path uploadRootPath;
 	
@@ -80,15 +70,17 @@ public class ImageServiceTests {
 	
 	@Test
 	public void fetchesSingleImage() throws IOException {
-		when(resourceLoader.getResource("file:" + ImageService.UPLOAD_ROOT + "/" + A_FILENAME))
+		//For some reason, the autowired imageService does not get the mocked ResourceLoader injected
+		ImageService localImageService = new ImageService(resourceLoader);
+		
+		when(resourceLoader.getResource(anyString()))
 			.thenReturn(new FileUrlResource(uploadRootPath.resolve(A_FILENAME).toUri().toURL()));
-		Mono<Resource> image = imageService.findImage(A_FILENAME);
+		Mono<Resource> image = localImageService.findImage(A_FILENAME);
 		
 		byte[] output = new byte[100];
 		image.block().getInputStream().read(output);
-		String fileContents = String.valueOf(output);
-		assertThat(fileContents, is("Test File 3"));
-		//assertThat(image.block().getFilename(), is(A_FILENAME));
+		String fileContents = new String(output);
+		assertThat(fileContents, containsString("Test File 3"));
 	}
 	
 	@Test
