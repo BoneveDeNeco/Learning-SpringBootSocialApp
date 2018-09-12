@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -85,6 +86,7 @@ public class ImageServiceTests {
 	
 	@Test
 	public void createsImages() {
+		//I have to use mocks here because toFile() in Jimfs is unsupported
 		FilePart file = mock(FilePart.class);
 		when(file.filename()).thenReturn(DIFFERENT_FILENAME);
 		when(file.transferTo(any())).thenReturn(Mono.empty());
@@ -93,13 +95,16 @@ public class ImageServiceTests {
 		Path mockRootPath = mock(Path.class);
 		Path resolvedMockPath = mock(Path.class);
 		when(mockRootPath.resolve(anyString())).thenReturn(resolvedMockPath);
-		when(resolvedMockPath.toFile()).thenReturn(mock(File.class));
+		File mockFile = mock(File.class);
+		when(resolvedMockPath.toFile()).thenReturn(mockFile);
 		imageService.setUploadRootPath(mockRootPath);
 		
 		Mono<Void> mono = imageService.createImage(files);
 		mono.subscribe();
 		
-		verify(file).transferTo(any());
+		ArgumentCaptor<File> fileArgument = ArgumentCaptor.forClass(File.class);
+		verify(file).transferTo(fileArgument.capture());
+		assertThat(fileArgument.getValue(), is(mockFile));
 	}
 	
 	@Test

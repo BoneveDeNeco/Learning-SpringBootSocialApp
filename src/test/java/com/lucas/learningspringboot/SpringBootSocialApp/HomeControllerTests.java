@@ -10,11 +10,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.FileUrlResource;
 import org.springframework.core.io.Resource;
@@ -35,14 +40,77 @@ public class HomeControllerTests {
 
 	private static final String FILE_NAME = "image.jpg";
 	private static final String FILE_CONTENTS = "Test File";
+	private static final String GET_IMAGE_PATH = HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw";
 
 	@Autowired
 	WebTestClient webTestClient;
 
-	@SpyBean
+	@MockBean
 	ImageService imageService;
+	
+	Resource imageResource;
+	
+	@Before
+	public void setup() throws IOException {
+		InputStream mockInputStream = mock(InputStream.class);
+		//when(mockInputStream.read(any())).thenThrow(new RuntimeException("Hit"));
+		when(mockInputStream.read(any(), anyInt(), anyInt())).thenAnswer(new Answer<Integer>() {
 
+			@Override
+			public Integer answer(InvocationOnMock invocation) throws Throwable {
+				byte[] buffer = invocation.getArgument(0);
+				byte[] fileContents = FILE_CONTENTS.getBytes();
+				System.arraycopy(fileContents, 0, buffer, 0, 
+						fileContents.length < buffer.length ? fileContents.length : buffer.length);
+				return -1;
+			}
+		});
+		when(mockInputStream.read()).thenReturn(-1);
+		imageResource = mock(Resource.class);
+		when(imageResource.getInputStream()).thenReturn(mockInputStream);
+		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
+	}
+	
 	@Test
+	public void handlesRequestForGettingSingleImage() throws IOException {
+		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
+		.expectStatus().is2xxSuccessful()
+		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
+	}
+	
+	@Test
+	public void getImageHandlerAnswersWithContentLength() throws IOException {
+		when(imageResource.contentLength()).thenReturn(10l);
+		
+		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
+		.expectHeader().contentLength(10);
+	}
+	
+	//@Test
+	public void getImageHandlerPutsImageInResponseBody() {
+		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
+		.expectBody()
+		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString(FILE_CONTENTS)));;
+	}
+	
+	@Test
+	public void handlesRequestForCreatingImageFiles() {
+		webTestClient.post().uri(HomeController.BASE_PATH).exchange();
+	}
+	
+	@Test
+	public void createFileHandlerRedirectsToHomePage() {
+		webTestClient.post().uri(HomeController.BASE_PATH).exchange()
+		.expectStatus().is3xxRedirection();
+	}
+	
+	@Test
+	public void createFileHandlerCreatesNewFile() {
+		webTestClient.post().uri(HomeController.BASE_PATH).exchange();
+	}
+	
+	//@Test
+	//Not a good test. Tries to test too much
 	public void handlesRequestForOneRawImageWithVirtualFilesystem() throws IOException {
 		FileSystem filesystem = Jimfs.newFileSystem();
 		Path uploadRootPath = filesystem.getPath(ImageService.UPLOAD_ROOT);
@@ -56,34 +124,13 @@ public class HomeControllerTests {
 				.thenReturn(new FileUrlResource(uploadRootPath.resolve(FILE_NAME).toUri().toURL()));
 
 		imageService.setResourceLoader(resourceLoader);
+		when(imageService.findImage(anyString())).thenCallRealMethod();
 
-		webTestClient.get().uri(HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw")
+		webTestClient.get().uri(GET_IMAGE_PATH)
 		.exchange()
 		.expectStatus().is2xxSuccessful()
 		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE)
 		.expectBody()
 		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString(FILE_CONTENTS)));
-	}
-	
-	@Test
-	public void handlesRequestToUploadImageFiles() {
-		webTestClient.post().uri(HomeController.BASE_PATH)
-		.exchange()
-		.expectStatus().is3xxRedirection();
-	}
-
-	@Test
-	public void handlesRequestForOneRawImageWithMocks() throws IOException {
-		InputStream mockInputStream = mock(InputStream.class);
-		when(mockInputStream.read(any())).thenReturn(-1);
-		when(mockInputStream.read(any(), anyInt(), anyInt())).thenReturn(-1);
-		when(mockInputStream.read()).thenReturn(-1);
-		Resource imageResource = mock(Resource.class);
-		when(imageResource.getInputStream()).thenReturn(mockInputStream);
-		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
-
-		webTestClient.get().uri(HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw").exchange()
-		.expectStatus().is2xxSuccessful()
-		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
 	}
 }
