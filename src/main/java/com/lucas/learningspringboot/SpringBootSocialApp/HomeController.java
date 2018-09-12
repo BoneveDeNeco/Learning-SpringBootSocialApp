@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import reactor.core.publisher.Mono;
@@ -38,11 +39,15 @@ public class HomeController {
 								.body(new InputStreamResource(
 										resource.getInputStream()));
 					} catch (IOException e) {
-						e.printStackTrace();
 						return ResponseEntity.badRequest()
 							.body("Couldn't find " + filename + 
 									" => " + e.getStackTrace());
 					}
 				});
+	}
+	
+	@PostMapping(value=BASE_PATH)
+	public Mono<String> createFile() {
+		return Mono.just("redirect:/");
 	}
 }

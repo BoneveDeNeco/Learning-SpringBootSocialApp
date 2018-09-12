@@ -57,7 +57,8 @@ public class HomeControllerTests {
 
 		imageService.setResourceLoader(resourceLoader);
 
-		webTestClient.get().uri(HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw").exchange()
+		webTestClient.get().uri(HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw")
+		.exchange()
 		.expectStatus().is2xxSuccessful()
 		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE)
 		.expectBody()
@@ -66,7 +67,9 @@ public class HomeControllerTests {
 	
 	@Test
 	public void handlesRequestToUploadImageFiles() {
-		webTestClient.post().uri("");
+		webTestClient.post().uri(HomeController.BASE_PATH)
+		.exchange()
+		.expectStatus().is3xxRedirection();
 	}
 
 	@Test
