@@ -33,6 +33,9 @@ import reactor.core.publisher.Mono;
 @AutoConfigureWebTestClient
 public class HomeControllerTests {
 
+	private static final String FILE_NAME = "image.jpg";
+	private static final String FILE_CONTENTS = "Test File";
+
 	@Autowired
 	WebTestClient webTestClient;
 
@@ -46,21 +49,22 @@ public class HomeControllerTests {
 
 		Files.createDirectory(uploadRootPath);
 
-		Files.write(uploadRootPath.resolve("image.jpg"), ImmutableList.of("Test File"), StandardCharsets.UTF_8);
+		Files.write(uploadRootPath.resolve(FILE_NAME), ImmutableList.of(FILE_CONTENTS), StandardCharsets.UTF_8);
 
 		ResourceLoader resourceLoader = mock(ResourceLoader.class);
 		when(resourceLoader.getResource(anyString()))
-				.thenReturn(new FileUrlResource(uploadRootPath.resolve("image.jpg").toUri().toURL()));
+				.thenReturn(new FileUrlResource(uploadRootPath.resolve(FILE_NAME).toUri().toURL()));
 
 		imageService.setResourceLoader(resourceLoader);
 
-		webTestClient.get().uri(HomeController.BASE_PATH + "/image.jpg/raw").exchange()
+		webTestClient.get().uri(HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw").exchange()
 		.expectStatus().is2xxSuccessful()
 		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE)
 		.expectBody()
-		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString("Test File")));
+		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString(FILE_CONTENTS)));
 	}
-
+	
+	
 	@Test
 	public void handlesRequestForOneRawImageWithMocks() throws IOException {
 		InputStream mockInputStream = mock(InputStream.class);
@@ -69,9 +73,10 @@ public class HomeControllerTests {
 		when(mockInputStream.read()).thenReturn(-1);
 		Resource imageResource = mock(Resource.class);
 		when(imageResource.getInputStream()).thenReturn(mockInputStream);
-		when(imageService.findImage("image.jpg")).thenReturn(Mono.just(imageResource));
+		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
 
-		webTestClient.get().uri(HomeController.BASE_PATH + "/image.jpg/raw").exchange().expectStatus().is2xxSuccessful()
-				.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
+		webTestClient.get().uri(HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw").exchange()
+		.expectStatus().is2xxSuccessful()
+		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
 	}
 }
