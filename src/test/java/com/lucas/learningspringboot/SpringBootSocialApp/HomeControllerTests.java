@@ -64,7 +64,11 @@ public class HomeControllerTests {
 		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString(FILE_CONTENTS)));
 	}
 	
-	
+	@Test
+	public void handlesRequestToUploadImageFiles() {
+		webTestClient.post().uri("");
+	}
+
 	@Test
 	public void handlesRequestForOneRawImageWithMocks() throws IOException {
 		InputStream mockInputStream = mock(InputStream.class);
