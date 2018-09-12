@@ -18,16 +18,12 @@ public class ImageService {
 	
 	protected static final String UPLOAD_ROOT = "upload-dir";
 	
-	private final ResourceLoader resourceLoader;
+	private ResourceLoader resourceLoader;
 	private Path uploadRootPath = Paths.get(UPLOAD_ROOT);
 	
 	@Autowired
 	public ImageService(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
-	}
-	
-	public void setUploadRootPath(Path uploadRootPath) {
-		this.uploadRootPath = uploadRootPath;
 	}
 	
 	public Flux<Image> findAllImages() {
@@ -61,6 +57,14 @@ public class ImageService {
 				throw new RuntimeException(e);
 			}
 		});
+	}
+	
+	public void setUploadRootPath(Path uploadRootPath) {
+		this.uploadRootPath = uploadRootPath;
+	}
+	
+	protected void setResourceLoader(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
 	}
 	
 	/*@Bean

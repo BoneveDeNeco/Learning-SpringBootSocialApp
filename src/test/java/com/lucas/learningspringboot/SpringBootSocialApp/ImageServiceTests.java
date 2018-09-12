@@ -71,11 +71,11 @@ public class ImageServiceTests {
 	@Test
 	public void fetchesSingleImage() throws IOException {
 		//For some reason, the autowired imageService does not get the mocked ResourceLoader injected
-		ImageService localImageService = new ImageService(resourceLoader);
+		imageService.setResourceLoader(resourceLoader);
 		
 		when(resourceLoader.getResource(anyString()))
 			.thenReturn(new FileUrlResource(uploadRootPath.resolve(A_FILENAME).toUri().toURL()));
-		Mono<Resource> image = localImageService.findImage(A_FILENAME);
+		Mono<Resource> image = imageService.findImage(A_FILENAME);
 		
 		byte[] output = new byte[100];
 		image.block().getInputStream().read(output);
