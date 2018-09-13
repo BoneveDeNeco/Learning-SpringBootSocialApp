@@ -53,19 +53,17 @@ public class HomeControllerTests {
 	@Before
 	public void setup() throws IOException {
 		InputStream mockInputStream = mock(InputStream.class);
-		//when(mockInputStream.read(any())).thenThrow(new RuntimeException("Hit"));
-		when(mockInputStream.read(any(), anyInt(), anyInt())).thenAnswer(new Answer<Integer>() {
 
-			@Override
-			public Integer answer(InvocationOnMock invocation) throws Throwable {
-				byte[] buffer = invocation.getArgument(0);
-				byte[] fileContents = FILE_CONTENTS.getBytes();
-				System.arraycopy(fileContents, 0, buffer, 0, 
-						fileContents.length < buffer.length ? fileContents.length : buffer.length);
-				return -1;
-			}
-		});
-		when(mockInputStream.read()).thenReturn(-1);
+		when(mockInputStream.read(any(), anyInt(), anyInt()))
+		.thenAnswer(invocation -> {
+			byte[] buffer = invocation.getArgument(0);
+			byte[] fileContents = FILE_CONTENTS.getBytes();
+			System.arraycopy(fileContents, 0, buffer, 0, 
+					fileContents.length < buffer.length ? fileContents.length : buffer.length);
+			return fileContents.length;
+		})
+		.thenReturn(-1); //EOF on second call
+
 		imageResource = mock(Resource.class);
 		when(imageResource.getInputStream()).thenReturn(mockInputStream);
 		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
@@ -86,7 +84,7 @@ public class HomeControllerTests {
 		.expectHeader().contentLength(10);
 	}
 	
-	//@Test
+	@Test
 	public void getImageHandlerPutsImageInResponseBody() {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
 		.expectBody()
