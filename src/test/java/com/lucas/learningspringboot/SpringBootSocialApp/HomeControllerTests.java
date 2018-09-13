@@ -15,23 +15,22 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.FileUrlResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
-import org.springframework.http.codec.multipart.SynchronossPartHttpMessageReader;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -48,8 +47,10 @@ import reactor.core.publisher.Mono;
 public class HomeControllerTests {
 
 	private static final String FILE_NAME = "image.jpg";
+	private static final String DELETE_IMAGE_PATH = HomeController.BASE_PATH + "/" + FILE_NAME;
 	private static final String FILE_CONTENTS = "Test File";
-	private static final String GET_IMAGE_PATH = HomeController.BASE_PATH + "/"+ FILE_NAME +"/raw";
+	private static final String GET_IMAGE_PATH = DELETE_IMAGE_PATH+ "/raw";
+	private static final String ROOT_LOCATION = "/";
 
 	@Autowired
 	WebTestClient webTestClient;
@@ -58,6 +59,8 @@ public class HomeControllerTests {
 	ImageService imageService;
 	
 	Resource imageResource;
+	HomeController controller;
+	Model model;
 	
 	@Before
 	public void setup() throws IOException {
@@ -78,12 +81,21 @@ public class HomeControllerTests {
 		
 		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
 		when(imageService.createImage(any())).thenReturn(Mono.empty());
+		when(imageService.deleteImage(anyString())).thenReturn(Mono.empty());
+		
+		controller = new HomeController(imageService);
+		model = mock(Model.class);
 	}
 	
 	@Test
-	public void handlesRequestForGettingSingleImage() throws IOException {
+	public void handlesRequestForGettingSingleImage() {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-			.expectStatus().is2xxSuccessful()
+			.expectBody().consumeWith(response -> assertHandlerExists(response));
+	}
+	
+	@Test
+	public void getImageHandlerAnswersWithJpegContentType() throws IOException {
+		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
 			.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
 	}
 	
@@ -98,23 +110,23 @@ public class HomeControllerTests {
 	@Test
 	public void getImageHandlerPutsImageInResponseBody() {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-			.expectBody()
-			.consumeWith(response -> assertThat(new String(response.getResponseBody()), is(FILE_CONTENTS)));;
+			.expectBody().consumeWith(response -> assertThat(new String(response.getResponseBody()), is(FILE_CONTENTS)));;
 	}
 	
 	@Test
 	public void handlesRequestForCreatingImageFiles() {
-		webTestClient.post().uri(HomeController.BASE_PATH).exchange();
-	}
-	
-	@Test
-	public void createFileHandlerRedirectsToHomePage() {
 		webTestClient.post().uri(HomeController.BASE_PATH).exchange()
-			.expectStatus().is3xxRedirection();
+			.expectBody().consumeWith(response -> assertHandlerExists(response));
 	}
 	
 	@Test
-	public void createFileHandlerCreatesNewFile() throws IOException {
+	public void createImageHandlerRedirectsToHomePage() {
+		webTestClient.post().uri(HomeController.BASE_PATH).exchange()
+			.expectBody().consumeWith(response -> assertRedirectionLocation(response, ROOT_LOCATION));
+	}
+	
+	@Test
+	public void createImageHandlerCreatesNewFile() throws IOException {
 		MultiValueMap<String, Object> multipartData = new LinkedMultiValueMap<>();
 		multipartData.add("file", FILE_CONTENTS);
 		
@@ -131,8 +143,60 @@ public class HomeControllerTests {
 		assertThat(fileContents, is(FILE_CONTENTS));
 	}
 	
+	@Test
+	public void handlesRequestForDeletingAnImage() {
+		webTestClient.delete().uri(DELETE_IMAGE_PATH).exchange()
+			.expectBody().consumeWith(response -> assertHandlerExists(response));
+	}
+	
+	@Test
+	public void deleteImageHandlerRedirectsToHome() {
+		webTestClient.delete().uri(DELETE_IMAGE_PATH).exchange()
+			.expectBody().consumeWith(response -> assertRedirectionLocation(response, ROOT_LOCATION));
+	}
+	
+	@Test
+	public void deleteImageHandlerDeletesImage() {
+		webTestClient.delete().uri(DELETE_IMAGE_PATH).exchange();
+		
+		verify(imageService).deleteImage(FILE_NAME);
+	}
+	
+	@Test
+	public void handlesRequestForGettingIndex() {
+		webTestClient.get().uri(ROOT_LOCATION).exchange()
+			.expectBody().consumeWith(response -> assertHandlerExists(response));
+	}
+	
+	@Test
+	public void indexHandlerAnswersWithIndexPage() {
+		Mono<String> pageToRender = controller.index(model);
+		
+		assertThat(pageToRender.block(), is("index"));
+	}
+	
+	@Test
+	public void indexHandlerAddsImagesToPageModel() {
+		Flux<Image> images = Flux.just(new Image("1", "Image 1"));
+		when(imageService.findAllImages()).thenReturn(images);
+		
+		controller.index(model);
+		
+		verify(model).addAttribute("images", images);
+	}
+	
+	private void assertHandlerExists(EntityExchangeResult<byte[]> response) {
+		assertThat(response.getStatus(), is(not(HttpStatus.NOT_FOUND)));
+	}
+	
+	private void assertRedirectionLocation(EntityExchangeResult<byte[]> response, String location) {
+		assertTrue("Should be Redirection status (3xx), but was " + response.getStatus(),
+				response.getStatus().is3xxRedirection());
+		assertThat(response.getResponseHeaders().getLocation().toString(), is(location));
+	}
+	
 	//@Test
-	//Not a good test. Tries to test too much
+	//Not a good test. Tries to test too much. I'm leaving it here for example purposes
 	public void handlesRequestForOneRawImageWithVirtualFilesystem() throws IOException {
 		FileSystem filesystem = Jimfs.newFileSystem();
 		Path uploadRootPath = filesystem.getPath(ImageService.UPLOAD_ROOT);
