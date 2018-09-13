@@ -14,10 +14,12 @@ import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -25,12 +27,19 @@ import org.springframework.core.io.FileUrlResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.Part;
+import org.springframework.http.codec.multipart.SynchronossPartHttpMessageReader;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Jimfs;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
@@ -55,25 +64,27 @@ public class HomeControllerTests {
 		InputStream mockInputStream = mock(InputStream.class);
 
 		when(mockInputStream.read(any(), anyInt(), anyInt()))
-		.thenAnswer(invocation -> {
-			byte[] buffer = invocation.getArgument(0);
-			byte[] fileContents = FILE_CONTENTS.getBytes();
-			System.arraycopy(fileContents, 0, buffer, 0, 
-					fileContents.length < buffer.length ? fileContents.length : buffer.length);
-			return fileContents.length;
-		})
-		.thenReturn(-1); //EOF on second call
+			.thenAnswer(invocation -> {
+				byte[] buffer = invocation.getArgument(0);
+				byte[] fileContents = FILE_CONTENTS.getBytes();
+				System.arraycopy(fileContents, 0, buffer, 0, 
+						fileContents.length < buffer.length ? fileContents.length : buffer.length);
+				return fileContents.length;
+			})
+			.thenReturn(-1); //EOF on second call
 
 		imageResource = mock(Resource.class);
 		when(imageResource.getInputStream()).thenReturn(mockInputStream);
+		
 		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
+		when(imageService.createImage(any())).thenReturn(Mono.empty());
 	}
 	
 	@Test
 	public void handlesRequestForGettingSingleImage() throws IOException {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-		.expectStatus().is2xxSuccessful()
-		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
+			.expectStatus().is2xxSuccessful()
+			.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
 	}
 	
 	@Test
@@ -81,14 +92,14 @@ public class HomeControllerTests {
 		when(imageResource.contentLength()).thenReturn(10l);
 		
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-		.expectHeader().contentLength(10);
+			.expectHeader().contentLength(10);
 	}
 	
 	@Test
 	public void getImageHandlerPutsImageInResponseBody() {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-		.expectBody()
-		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString(FILE_CONTENTS)));;
+			.expectBody()
+			.consumeWith(response -> assertThat(new String(response.getResponseBody()), is(FILE_CONTENTS)));;
 	}
 	
 	@Test
@@ -99,12 +110,25 @@ public class HomeControllerTests {
 	@Test
 	public void createFileHandlerRedirectsToHomePage() {
 		webTestClient.post().uri(HomeController.BASE_PATH).exchange()
-		.expectStatus().is3xxRedirection();
+			.expectStatus().is3xxRedirection();
 	}
 	
 	@Test
-	public void createFileHandlerCreatesNewFile() {
-		webTestClient.post().uri(HomeController.BASE_PATH).exchange();
+	public void createFileHandlerCreatesNewFile() throws IOException {
+		MultiValueMap<String, Object> multipartData = new LinkedMultiValueMap<>();
+		multipartData.add("file", FILE_CONTENTS);
+		
+		webTestClient.post().uri(HomeController.BASE_PATH)
+			.body(BodyInserters.fromMultipartData(multipartData))
+			.exchange();
+		
+		ArgumentCaptor<Flux<FilePart>> filesArgCaptor = ArgumentCaptor.forClass(Flux.class);
+		verify(imageService).createImage(filesArgCaptor.capture());
+		byte[] buffer = new byte[100];
+		((Part) filesArgCaptor.getValue().blockFirst()).content()
+			.blockFirst().asInputStream().read(buffer);
+		String fileContents = new String(buffer).trim();
+		assertThat(fileContents, is(FILE_CONTENTS));
 	}
 	
 	//@Test
