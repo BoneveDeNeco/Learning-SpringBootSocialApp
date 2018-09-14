@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp;
+package com.lucas.learningspringboot.SpringBootSocialApp.services;
 
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
@@ -25,6 +25,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Jimfs;
+import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

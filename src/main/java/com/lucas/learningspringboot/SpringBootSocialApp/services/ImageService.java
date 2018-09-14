@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp;
+package com.lucas.learningspringboot.SpringBootSocialApp.services;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,13 +10,16 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+
+import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 public class ImageService {
 	
-	protected static final String UPLOAD_ROOT = "upload-dir";
+	public static final String UPLOAD_ROOT = "upload-dir";
 	
 	private ResourceLoader resourceLoader;
 	private Path uploadRootPath = Paths.get(UPLOAD_ROOT);
@@ -63,7 +66,7 @@ public class ImageService {
 		this.uploadRootPath = uploadRootPath;
 	}
 	
-	protected void setResourceLoader(ResourceLoader resourceLoader) {
+	public void setResourceLoader(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
 	}
 	

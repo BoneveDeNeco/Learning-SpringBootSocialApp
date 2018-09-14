@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp;
+package com.lucas.learningspringboot.SpringBootSocialApp.controllers;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
@@ -37,6 +37,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Jimfs;
+import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+import com.lucas.learningspringboot.SpringBootSocialApp.controllers.HomeController;
+import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
