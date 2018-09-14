@@ -200,7 +200,7 @@ public class HomeControllerTests {
 	
 	//@Test
 	//Not a good test. Tries to test too much. I'm leaving it here for example purposes
-	public void handlesRequestForOneRawImageWithVirtualFilesystem() throws IOException {
+	/*public void handlesRequestForOneRawImageWithVirtualFilesystem() throws IOException {
 		FileSystem filesystem = Jimfs.newFileSystem();
 		Path uploadRootPath = filesystem.getPath(ImageService.UPLOAD_ROOT);
 
@@ -221,5 +221,5 @@ public class HomeControllerTests {
 		.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE)
 		.expectBody()
 		.consumeWith(response -> assertThat(new String(response.getResponseBody()), containsString(FILE_CONTENTS)));
-	}
+	}*/
 }
