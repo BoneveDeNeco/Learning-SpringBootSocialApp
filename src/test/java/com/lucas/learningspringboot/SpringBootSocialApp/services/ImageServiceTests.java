@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Jimfs;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+import com.lucas.learningspringboot.SpringBootSocialApp.repositories.ImageRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
 
 import reactor.core.publisher.Flux;
@@ -40,6 +41,9 @@ public class ImageServiceTests {
 	
 	@MockBean
 	ResourceLoader resourceLoader;
+	
+	@MockBean
+	ImageRepository imageRepository;
 	
 	@Autowired
 	ImageService imageService;
