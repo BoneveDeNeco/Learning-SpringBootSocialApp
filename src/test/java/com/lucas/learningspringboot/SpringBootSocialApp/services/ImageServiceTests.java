@@ -34,13 +34,21 @@ public class ImageServiceTests {
 	ImageService imageService;
 	
 	Path uploadRootPath = Paths.get(ImageService.UPLOAD_ROOT);
+	Flux<FilePart> files;
+	File mockFile;
+	FilePart file;
 	
 	@Before
 	public void setup() throws IOException {
 		resourceLoader = mock(ResourceLoader.class);
+		
 		imageRepository = mock(ImageRepository.class);
+		when(imageRepository.save(any()))
+			.thenReturn(Mono.just(new Image("1", A_FILENAME)));
+		
 		filesystemWrapper = mock(FileSystemWrapper.class);
 		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(uploadRootPath);
+		
 		imageService = new ImageService(filesystemWrapper, resourceLoader, imageRepository);
 	}
 	
@@ -63,33 +71,22 @@ public class ImageServiceTests {
 	}
 	
 	@Test
-	public void createsImages() {
-		FilePart file = mock(FilePart.class);
-		when(file.filename()).thenReturn(A_FILENAME);
-		when(file.transferTo(any())).thenReturn(Mono.empty());
-		Flux<FilePart> files = Flux.just(file);
-		
-		Path mockUploadRootPath = mock(Path.class);
-		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(mockUploadRootPath);
-		Path resolvedMockPath = mock(Path.class);
-		when(mockUploadRootPath.resolve(A_FILENAME)).thenReturn(resolvedMockPath);
-		File mockFile = mock(File.class);
-		when(resolvedMockPath.toFile()).thenReturn(mockFile);
+	public void createsImagesAndCopiesToServer() throws IOException {
+		setupMocksForFileCreation();
 		
 		Mono<Void> mono = imageService.createImage(files);
 		mono.subscribe();
 		
+		verify(mockFile).createNewFile();
 		verify(file).transferTo(mockFile);
 	}
 	
-	//@Test
+	@Test
 	public void savesImageToRepository() {
-		FilePart file = mock(FilePart.class);
-		when(file.filename()).thenReturn(A_FILENAME);
-		when(file.transferTo(any())).thenReturn(Mono.empty());
-		Flux<FilePart> files = Flux.just(file);
+		setupMocksForFileCreation();
 		
 		Mono<Void> handler = imageService.createImage(files);
+		handler.subscribe();
 		
 		ArgumentCaptor<Image> imageArgument = ArgumentCaptor.forClass(Image.class);
 		verify(imageRepository).save(imageArgument.capture());
@@ -103,5 +100,19 @@ public class ImageServiceTests {
 		handle.subscribe();
 		
 		verify(filesystemWrapper).deleteIfExists(uploadRootPath.resolve(A_FILENAME));
+	}
+	
+	private void setupMocksForFileCreation() {
+		file = mock(FilePart.class);
+		when(file.filename()).thenReturn(A_FILENAME);
+		when(file.transferTo(any())).thenReturn(Mono.empty());
+		files = Flux.just(file);
+		
+		Path mockUploadRootPath = mock(Path.class);
+		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(mockUploadRootPath);
+		Path resolvedMockPath = mock(Path.class);
+		when(mockUploadRootPath.resolve(A_FILENAME)).thenReturn(resolvedMockPath);
+		mockFile = mock(File.class);
+		when(resolvedMockPath.toFile()).thenReturn(mockFile);
 	}
 }

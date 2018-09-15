@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -11,6 +12,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
 import com.lucas.learningspringboot.SpringBootSocialApp.FileSystemWrapper;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.repositories.ImageRepository;
@@ -45,10 +47,28 @@ public class ImageService {
 	}
 	
 	public Mono<Void> createImage(Flux<FilePart> files) {
-		return files.flatMap(file -> 
-				file.transferTo(fileSystemWrapper.getPath(UPLOAD_ROOT)
-						.resolve(file.filename()).toFile()))
-			.then();
+		return files.flatMap(file -> {
+			Mono<Image> saveImageToDatabase = imageRepository.save(
+					new Image(UUID.randomUUID().toString(), file.filename()));
+			
+			Mono<Void> copyFile = Mono.just(fileSystemWrapper.getPath(UPLOAD_ROOT)
+					.resolve(file.filename()).toFile())
+				.log("createImage-picktarget")
+				.map(destFile -> {
+					try {
+						destFile.createNewFile();
+						return destFile;
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				})
+				.log("createImage-newfile")
+				.flatMap(file::transferTo)
+				.log("createImage-copy");
+			
+			return Mono.when(saveImageToDatabase, copyFile);
+		})
+		.then();
 	}
 	
 	public Mono<Void> deleteImage(String filename) {
