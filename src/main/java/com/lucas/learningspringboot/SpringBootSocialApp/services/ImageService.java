@@ -26,7 +26,6 @@ public class ImageService {
 	private final ResourceLoader resourceLoader;
 	private final ImageRepository imageRepository;
 	private final FileSystemWrapper fileSystemWrapper;
-	private Path uploadRootPath = Paths.get(UPLOAD_ROOT);
 	
 	@Autowired
 	public ImageService(FileSystemWrapper fileSystemWrapper, ResourceLoader resourceLoader, 
@@ -47,21 +46,19 @@ public class ImageService {
 	
 	public Mono<Void> createImage(Flux<FilePart> files) {
 		return files.flatMap(file -> 
-				file.transferTo(uploadRootPath.resolve(file.filename()).toFile()))
+				file.transferTo(fileSystemWrapper.getPath(UPLOAD_ROOT)
+						.resolve(file.filename()).toFile()))
 			.then();
 	}
 	
 	public Mono<Void> deleteImage(String filename) {
 		return Mono.fromRunnable(() -> {
 			try {
-				fileSystemWrapper.deleteIfExists(uploadRootPath.resolve(filename));
+				fileSystemWrapper.deleteIfExists(fileSystemWrapper.getPath(UPLOAD_ROOT)
+						.resolve(filename));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		});
-	}
-	
-	public void setUploadRootPath(Path uploadRootPath) {
-		this.uploadRootPath = uploadRootPath;
 	}
 }

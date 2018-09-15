@@ -26,7 +26,6 @@ import reactor.core.publisher.Mono;
 
 public class ImageServiceTests {
 	
-	private static final String DIFFERENT_FILENAME = "filename";
 	private static final String A_FILENAME = "bazinga.png";
 	
 	ResourceLoader resourceLoader;
@@ -41,6 +40,7 @@ public class ImageServiceTests {
 		resourceLoader = mock(ResourceLoader.class);
 		imageRepository = mock(ImageRepository.class);
 		filesystemWrapper = mock(FileSystemWrapper.class);
+		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(uploadRootPath);
 		imageService = new ImageService(filesystemWrapper, resourceLoader, imageRepository);
 	}
 	
@@ -65,23 +65,35 @@ public class ImageServiceTests {
 	@Test
 	public void createsImages() {
 		FilePart file = mock(FilePart.class);
-		when(file.filename()).thenReturn(DIFFERENT_FILENAME);
+		when(file.filename()).thenReturn(A_FILENAME);
 		when(file.transferTo(any())).thenReturn(Mono.empty());
 		Flux<FilePart> files = Flux.just(file);
 		
-		Path mockRootPath = mock(Path.class);
+		Path mockUploadRootPath = mock(Path.class);
+		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(mockUploadRootPath);
 		Path resolvedMockPath = mock(Path.class);
-		when(mockRootPath.resolve(anyString())).thenReturn(resolvedMockPath);
+		when(mockUploadRootPath.resolve(A_FILENAME)).thenReturn(resolvedMockPath);
 		File mockFile = mock(File.class);
 		when(resolvedMockPath.toFile()).thenReturn(mockFile);
-		imageService.setUploadRootPath(mockRootPath);
 		
 		Mono<Void> mono = imageService.createImage(files);
 		mono.subscribe();
 		
-		ArgumentCaptor<File> fileArgument = ArgumentCaptor.forClass(File.class);
-		verify(file).transferTo(fileArgument.capture());
-		assertThat(fileArgument.getValue(), is(mockFile));
+		verify(file).transferTo(mockFile);
+	}
+	
+	//@Test
+	public void savesImageToRepository() {
+		FilePart file = mock(FilePart.class);
+		when(file.filename()).thenReturn(A_FILENAME);
+		when(file.transferTo(any())).thenReturn(Mono.empty());
+		Flux<FilePart> files = Flux.just(file);
+		
+		Mono<Void> handler = imageService.createImage(files);
+		
+		ArgumentCaptor<Image> imageArgument = ArgumentCaptor.forClass(Image.class);
+		verify(imageRepository).save(imageArgument.capture());
+		assertThat(imageArgument.getValue().getName(), is(A_FILENAME));
 	}
 	
 	@Test
