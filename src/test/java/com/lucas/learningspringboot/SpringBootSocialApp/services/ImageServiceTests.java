@@ -94,12 +94,23 @@ public class ImageServiceTests {
 	}
 	
 	@Test
-	public void deletesImages() throws IOException {
-		Mono<Void> handle = imageService.deleteImage(A_FILENAME);
+	public void deletesImagesFromFilesystem() throws IOException {
+		setupMocksForFileDelete();
 		
+		Mono<Void> handle = imageService.deleteImage(A_FILENAME);
 		handle.subscribe();
 		
 		verify(filesystemWrapper).deleteIfExists(uploadRootPath.resolve(A_FILENAME));
+	}
+	
+	@Test
+	public void deletesImageRecordFromDb() {
+		Image image = setupMocksForFileDelete();
+		
+		Mono<Void> handle = imageService.deleteImage(A_FILENAME);
+		handle.subscribe();
+		
+		verify(imageRepository).delete(image);
 	}
 	
 	private void setupMocksForFileCreation() {
@@ -114,5 +125,13 @@ public class ImageServiceTests {
 		when(mockUploadRootPath.resolve(A_FILENAME)).thenReturn(resolvedMockPath);
 		mockFile = mock(File.class);
 		when(resolvedMockPath.toFile()).thenReturn(mockFile);
+	}
+	
+	private Image setupMocksForFileDelete() {
+		Image image = new Image("1", A_FILENAME);
+		when(imageRepository.findByName(A_FILENAME))
+			.thenReturn(Mono.just(image));
+		when(imageRepository.delete(any())).thenReturn(Mono.empty());
+		return image;
 	}
 }
