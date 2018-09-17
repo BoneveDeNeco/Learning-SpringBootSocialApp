@@ -6,23 +6,19 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.io.FileUrlResource;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -35,8 +31,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.jimfs.Jimfs;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.controllers.HomeController;
 import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
@@ -45,8 +39,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
-@AutoConfigureWebTestClient
+//@SpringBootTest
+//@AutoConfigureWebTestClient
+@WebFluxTest(HomeController.class)
+@Import({ThymeleafAutoConfiguration.class})
 public class HomeControllerTests {
 
 	private static final String FILE_NAME = "image.jpg";

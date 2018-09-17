@@ -39,7 +39,7 @@ public class ImageService {
 	}
 	
 	public Flux<Image> findAllImages() {
-		return imageRepository.findAll();
+		return imageRepository.findAll().log("FindAll");
 	}
 	
 	public Mono<Resource> findImage(String filename) {
@@ -50,7 +50,8 @@ public class ImageService {
 	public Mono<Void> createImage(Flux<FilePart> files) {
 		return files.flatMap(file -> {
 			Mono<Image> saveImageToDatabase = imageRepository.save(
-					new Image(UUID.randomUUID().toString(), file.filename()));
+					new Image(UUID.randomUUID().toString(), file.filename()))
+					.log("createImage-save");
 			
 			Mono<Void> copyFile = Mono.just(fileSystemWrapper.getPath(UPLOAD_ROOT)
 					.resolve(file.filename()).toFile())
