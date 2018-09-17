@@ -53,6 +53,11 @@ public class ImageServiceTests {
 	}
 	
 	@Test
+	public void createsUploadDirectoryOnInstantiation() {
+		verify(filesystemWrapper).createDirectory(uploadRootPath);
+	}
+	
+	@Test
 	public void findsAllImages() {
 		when(imageRepository.findAll()).thenReturn(Flux.just(new Image("1", "1"), new Image("2", "2")));
 		

@@ -35,6 +35,7 @@ public class ImageService {
 		this.fileSystemWrapper = fileSystemWrapper;
 		this.resourceLoader = resourceLoader;
 		this.imageRepository = imageRepository;
+		this.fileSystemWrapper.createDirectory(fileSystemWrapper.getPath(UPLOAD_ROOT));
 	}
 	
 	public Flux<Image> findAllImages() {
@@ -59,7 +60,7 @@ public class ImageService {
 						destFile.createNewFile();
 						return destFile;
 					} catch (IOException e) {
-						throw new RuntimeException(e);
+						throw new RuntimeException(destFile.getAbsolutePath(), e);
 					}
 				})
 				.log("createImage-newfile")
@@ -77,12 +78,8 @@ public class ImageService {
 				.flatMap(imageRepository::delete);
 		
 		Mono<Void> deleteFile = Mono.fromRunnable(() -> {
-			try {
 				fileSystemWrapper.deleteIfExists(fileSystemWrapper.getPath(UPLOAD_ROOT)
 						.resolve(filename));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
 		});
 		
 		return Mono.when(deleteDatabaseRecord, deleteFile).then();
