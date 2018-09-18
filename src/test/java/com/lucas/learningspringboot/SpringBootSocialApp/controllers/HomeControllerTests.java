@@ -39,8 +39,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
-//@SpringBootTest
-//@AutoConfigureWebTestClient
 @WebFluxTest(HomeController.class)
 @Import({ThymeleafAutoConfiguration.class})
 public class HomeControllerTests {
