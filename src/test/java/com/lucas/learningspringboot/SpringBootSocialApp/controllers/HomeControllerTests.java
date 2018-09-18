@@ -18,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAut
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import org.springframework.http.codec.multipart.Part;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.test.web.reactive.server.WebTestClient.ControllerSpec;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -39,7 +41,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
-@WebFluxTest(HomeController.class)
+@WebFluxTest(controllers = HomeController.class)
 @Import({ThymeleafAutoConfiguration.class})
 public class HomeControllerTests {
 
@@ -61,22 +63,7 @@ public class HomeControllerTests {
 	
 	@Before
 	public void setup() throws IOException {
-		InputStream mockInputStream = mock(InputStream.class);
-
-		when(mockInputStream.read(any(), anyInt(), anyInt()))
-			.thenAnswer(invocation -> {
-				byte[] buffer = invocation.getArgument(0);
-				byte[] fileContents = FILE_CONTENTS.getBytes();
-				System.arraycopy(fileContents, 0, buffer, 0, 
-						fileContents.length < buffer.length ? fileContents.length : buffer.length);
-				return fileContents.length;
-			})
-			.thenReturn(-1); //EOF on second call
-
-		imageResource = mock(Resource.class);
-		when(imageResource.getInputStream()).thenReturn(mockInputStream);
-		
-		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
+		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(new ByteArrayResource(FILE_CONTENTS.getBytes())));
 		when(imageService.createImage(any())).thenReturn(Mono.empty());
 		when(imageService.deleteImage(anyString())).thenReturn(Mono.empty());
 		
@@ -98,10 +85,8 @@ public class HomeControllerTests {
 	
 	@Test
 	public void getImageHandlerAnswersWithContentLength() throws IOException {
-		when(imageResource.contentLength()).thenReturn(10l);
-		
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-			.expectHeader().contentLength(10);
+			.expectHeader().contentLength(FILE_CONTENTS.length());
 	}
 	
 	@Test
