@@ -36,6 +36,8 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-webflux')
 	compile('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
 	compile('org.synchronoss.cloud:nio-multipart-parser:1.1.0')
+	compile("org.seleniumhq.selenium:htmlunit-driver")
+	compile("org.seleniumhq.selenium:selenium-java")
 	
 	compileOnly('org.projectlombok:lombok')
 	
