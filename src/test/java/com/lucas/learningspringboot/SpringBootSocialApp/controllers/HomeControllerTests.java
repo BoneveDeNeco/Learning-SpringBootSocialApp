@@ -20,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -57,7 +58,6 @@ public class HomeControllerTests {
 	@MockBean
 	ImageService imageService;
 	
-	Resource imageResource;
 	HomeController controller;
 	Model model;
 	
@@ -92,7 +92,17 @@ public class HomeControllerTests {
 	@Test
 	public void getImageHandlerPutsImageInResponseBody() {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-			.expectBody().consumeWith(response -> assertThat(new String(response.getResponseBody()), is(FILE_CONTENTS)));;
+			.expectBody(String.class).isEqualTo(FILE_CONTENTS);
+	}
+	
+	@Test
+	public void getImageHandlerFailsForBadFile() throws IOException {
+		Resource imageResource = mock(Resource.class);
+		when(imageResource.getInputStream()).thenThrow(new IOException("Not found."));
+		when(imageService.findImage(FILE_NAME)).thenReturn(Mono.just(imageResource));
+		
+		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
+			.expectStatus().isBadRequest();
 	}
 	
 	@Test
@@ -104,7 +114,8 @@ public class HomeControllerTests {
 	@Test
 	public void createImageHandlerRedirectsToHomePage() {
 		webTestClient.post().uri(HomeController.BASE_PATH).exchange()
-			.expectBody().consumeWith(response -> assertRedirectionLocation(response, ROOT_LOCATION));
+		.expectStatus().isSeeOther()
+		.expectHeader().valueEquals(HttpHeaders.LOCATION, ROOT_LOCATION);
 	}
 	
 	@Test
@@ -134,7 +145,8 @@ public class HomeControllerTests {
 	@Test
 	public void deleteImageHandlerRedirectsToHome() {
 		webTestClient.delete().uri(DELETE_IMAGE_PATH).exchange()
-			.expectBody().consumeWith(response -> assertRedirectionLocation(response, ROOT_LOCATION));
+			.expectStatus().isSeeOther()
+			.expectHeader().valueEquals(HttpHeaders.LOCATION, ROOT_LOCATION);
 	}
 	
 	@Test
@@ -169,12 +181,6 @@ public class HomeControllerTests {
 	
 	private void assertHandlerExists(EntityExchangeResult<byte[]> response) {
 		assertThat(response.getStatus(), is(not(HttpStatus.NOT_FOUND)));
-	}
-	
-	private void assertRedirectionLocation(EntityExchangeResult<byte[]> response, String location) {
-		assertTrue("Should be Redirection status (3xx), but was " + response.getStatus(),
-				response.getStatus().is3xxRedirection());
-		assertThat(response.getResponseHeaders().getLocation().toString(), is(location));
 	}
 	
 	//@Test
