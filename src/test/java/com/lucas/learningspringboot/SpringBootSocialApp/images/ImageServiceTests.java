@@ -18,7 +18,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.codec.multipart.FilePart;
 
 import com.lucas.learningspringboot.SpringBootSocialApp.FileSystemWrapper;
-import com.lucas.learningspringboot.SpringBootSocialApp.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 

@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.codec.multipart.FilePart;
 
-import com.lucas.learningspringboot.SpringBootSocialApp.Image;
-
 import reactor.core.publisher.Flux;
 
 public class BlockingImageService {

@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp;
+package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

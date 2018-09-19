@@ -1,21 +1,18 @@
 package com.lucas.learningspringboot.SpringBootSocialApp;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
@@ -28,14 +25,16 @@ import org.springframework.http.codec.multipart.Part;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.test.web.reactive.server.WebTestClient.ControllerSpec;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import com.lucas.learningspringboot.SpringBootSocialApp.HomeController;
-import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+import com.lucas.learningspringboot.SpringBootSocialApp.comments.Comment;
+import com.lucas.learningspringboot.SpringBootSocialApp.comments.CommentReaderRepository;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 
 import reactor.core.publisher.Flux;
@@ -46,6 +45,10 @@ import reactor.core.publisher.Mono;
 @Import({ThymeleafAutoConfiguration.class})
 public class HomeControllerTests {
 
+	private static final Comment A_COMMENT = new Comment("c1", "1", "A commentary");
+	private static final Flux<Comment> A_COMMENT_FLUX = Flux.just(A_COMMENT);
+	private static final Image AN_IMAGE = new Image("1", "Image 1");
+	private static final Flux<Image> AN_IMAGE_FLUX = Flux.just(AN_IMAGE);
 	private static final String FILE_NAME = "image.jpg";
 	private static final String DELETE_IMAGE_PATH = HomeController.BASE_PATH + "/" + FILE_NAME;
 	private static final String FILE_CONTENTS = "Test File";
@@ -58,6 +61,9 @@ public class HomeControllerTests {
 	@MockBean
 	ImageService imageService;
 	
+	@MockBean
+	CommentReaderRepository commentReaderRepository;
+	
 	HomeController controller;
 	Model model;
 	
@@ -67,8 +73,7 @@ public class HomeControllerTests {
 		when(imageService.createImage(any())).thenReturn(Mono.empty());
 		when(imageService.deleteImage(anyString())).thenReturn(Mono.empty());
 		
-		controller = new HomeController(imageService);
-		model = mock(Model.class);
+		controller = new HomeController(imageService, commentReaderRepository);
 	}
 	
 	@Test
@@ -133,7 +138,7 @@ public class HomeControllerTests {
 		((Part) filesArgCaptor.getValue().blockFirst()).content()
 			.blockFirst().asInputStream().read(buffer);
 		String fileContents = new String(buffer).trim();
-		assertThat(fileContents, is(FILE_CONTENTS));
+		assertThat(fileContents).isEqualTo(FILE_CONTENTS);
 	}
 	
 	@Test
@@ -158,29 +163,43 @@ public class HomeControllerTests {
 	
 	@Test
 	public void handlesRequestForGettingIndex() {
+		setupIndexMocks();
+		
 		webTestClient.get().uri(ROOT_LOCATION).exchange()
 			.expectBody().consumeWith(response -> assertHandlerExists(response));
 	}
 	
 	@Test
 	public void indexHandlerAnswersWithIndexPage() {
-		Mono<String> pageToRender = controller.index(model);
+		setupIndexMocks();
 		
-		assertThat(pageToRender.block(), is("index"));
+		Mono<String> pageToRender = controller.index(mock(Model.class));
+		
+		assertThat(pageToRender.block()).isEqualTo("index");
 	}
 	
 	@Test
-	public void indexHandlerAddsImagesToPageModel() {
-		Flux<Image> images = Flux.just(new Image("1", "Image 1"));
-		when(imageService.findAllImages()).thenReturn(images);
+	public void indexHandlerAddsImagesWithCommentsToPageModel() {
+		setupIndexMocks();
+		
+		model = new ExtendedModelMap();
 		
 		controller.index(model);
-		
-		verify(model).addAttribute("images", images);
+		Flux<HashMap<String, Object>> imageFlux = (Flux<HashMap<String, Object>>) model.asMap().get("images");
+		HashMap<String, Object> imageAttributes = (HashMap<String, Object>) imageFlux.blockFirst();
+		assertThat(imageAttributes).contains(
+				entry("id", "1"),
+				entry("name", "Image 1"),
+				entry("comments", Arrays.asList(A_COMMENT)));
+	}
+	
+	private void setupIndexMocks() {
+		when(imageService.findAllImages()).thenReturn(AN_IMAGE_FLUX);
+		when(commentReaderRepository.findByImageId("1")).thenReturn(A_COMMENT_FLUX);
 	}
 	
 	private void assertHandlerExists(EntityExchangeResult<byte[]> response) {
-		assertThat(response.getStatus(), is(not(HttpStatus.NOT_FOUND)));
+		assertThat(response.getStatus()).isNotEqualTo(HttpStatus.NOT_FOUND);
 	}
 	
 	//@Test

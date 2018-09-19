@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
 import com.lucas.learningspringboot.SpringBootSocialApp.FileSystemWrapper;
-import com.lucas.learningspringboot.SpringBootSocialApp.Image;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.publisher.Flux;

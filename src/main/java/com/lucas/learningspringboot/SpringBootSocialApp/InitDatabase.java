@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Component;
 
+import com.lucas.learningspringboot.SpringBootSocialApp.images.Image;
+
 @Component
 public class InitDatabase {
 	

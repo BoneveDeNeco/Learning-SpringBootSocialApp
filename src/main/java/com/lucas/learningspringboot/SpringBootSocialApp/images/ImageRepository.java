@@ -1,7 +1,7 @@
 package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
-import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+
 import reactor.core.publisher.Mono;
 
 public interface ImageRepository extends ReactiveCrudRepository<Image, String> {
