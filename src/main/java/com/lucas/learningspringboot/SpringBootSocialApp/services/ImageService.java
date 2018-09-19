@@ -17,6 +17,7 @@ import com.lucas.learningspringboot.SpringBootSocialApp.FileSystemWrapper;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.repositories.ImageRepository;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -28,14 +29,16 @@ public class ImageService {
 	private final ResourceLoader resourceLoader;
 	private final ImageRepository imageRepository;
 	private final FileSystemWrapper fileSystemWrapper;
+	private final MeterRegistry meterRegistry;
 	
 	@Autowired
 	public ImageService(FileSystemWrapper fileSystemWrapper, ResourceLoader resourceLoader, 
-			ImageRepository imageRepository) {
+			ImageRepository imageRepository, MeterRegistry meterRegistry) {
 		this.fileSystemWrapper = fileSystemWrapper;
+		this.fileSystemWrapper.createDirectory(fileSystemWrapper.getPath(UPLOAD_ROOT));
 		this.resourceLoader = resourceLoader;
 		this.imageRepository = imageRepository;
-		this.fileSystemWrapper.createDirectory(fileSystemWrapper.getPath(UPLOAD_ROOT));
+		this.meterRegistry = meterRegistry;
 	}
 	
 	public Flux<Image> findAllImages() {
@@ -48,29 +51,42 @@ public class ImageService {
 	}
 	
 	public Mono<Void> createImage(Flux<FilePart> files) {
-		return files.flatMap(file -> {
-			Mono<Image> saveImageToDatabase = imageRepository.save(
-					new Image(UUID.randomUUID().toString(), file.filename()))
-					.log("createImage-save");
-			
-			Mono<Void> copyFile = Mono.just(fileSystemWrapper.getPath(UPLOAD_ROOT)
-					.resolve(file.filename()).toFile())
-				.log("createImage-picktarget")
-				.map(destFile -> {
-					try {
-						destFile.createNewFile();
-						return destFile;
-					} catch (IOException e) {
-						throw new RuntimeException(destFile.getAbsolutePath(), e);
-					}
-				})
-				.log("createImage-newfile")
-				.flatMap(file::transferTo)
-				.log("createImage-copy");
-			
-			return Mono.when(saveImageToDatabase, copyFile);
-		})
+		return files.flatMap(file -> 
+			Mono.when(saveImageToDatabase(file), 
+					copyFile(file),
+					countFile(file)))
 		.then();
+	}
+	
+	private Mono<Image> saveImageToDatabase(FilePart file) {
+		return imageRepository.save(
+				new Image(UUID.randomUUID().toString(), file.filename()))
+				.log("createImage-save");
+	}
+	
+	private Mono<Void> copyFile(FilePart file) {
+		return Mono.just(fileSystemWrapper.getPath(UPLOAD_ROOT)
+				.resolve(file.filename()).toFile())
+			.log("createImage-picktarget")
+			.map(destFile -> {
+				try {
+					destFile.createNewFile();
+					return destFile;
+				} catch (IOException e) {
+					throw new RuntimeException(destFile.getAbsolutePath(), e);
+				}
+			})
+			.log("createImage-newfile")
+			.flatMap(file::transferTo)
+			.log("createImage-copy");
+	}
+	
+	private Mono<Void> countFile(FilePart file) {
+		return Mono.fromRunnable(() -> {
+			meterRegistry.summary("files.uploaded.bytes")
+				.record(fileSystemWrapper.getPath(UPLOAD_ROOT, file.filename())
+						.toFile().length());
+		});
 	}
 	
 	public Mono<Void> deleteImage(String filename) {

@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,12 +22,15 @@ import com.lucas.learningspringboot.SpringBootSocialApp.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.repositories.ImageRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class ImageServiceTests {
 	
 	private static final String A_FILENAME = "bazinga.png";
+	private static final long MOCK_FILE_SIZE = 100;
 	
 	ResourceLoader resourceLoader;
 	ImageRepository imageRepository;
@@ -37,6 +41,8 @@ public class ImageServiceTests {
 	Flux<FilePart> files;
 	File mockFile;
 	FilePart file;
+	
+	MeterRegistry meterRegistry;
 	
 	@Before
 	public void setup() throws IOException {
@@ -49,7 +55,9 @@ public class ImageServiceTests {
 		filesystemWrapper = mock(FileSystemWrapper.class);
 		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(uploadRootPath);
 		
-		imageService = new ImageService(filesystemWrapper, resourceLoader, imageRepository);
+		meterRegistry = new SimpleMeterRegistry();
+		
+		imageService = new ImageService(filesystemWrapper, resourceLoader, imageRepository, meterRegistry);
 	}
 	
 	@Test
@@ -118,6 +126,16 @@ public class ImageServiceTests {
 		verify(imageRepository).delete(image);
 	}
 	
+	@Test
+	public void countsTotalBytesSavedCreatingImages() {
+		setupMocksForFileCreation();
+		
+		Mono<Void> handle = imageService.createImage(files);
+		handle.subscribe();
+		
+		assertThat(meterRegistry.get("files.uploaded.bytes").summary().takeSnapshot().total(), is((double)MOCK_FILE_SIZE));
+	}
+	
 	private void setupMocksForFileCreation() {
 		file = mock(FilePart.class);
 		when(file.filename()).thenReturn(A_FILENAME);
@@ -128,7 +146,9 @@ public class ImageServiceTests {
 		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT)).thenReturn(mockUploadRootPath);
 		Path resolvedMockPath = mock(Path.class);
 		when(mockUploadRootPath.resolve(A_FILENAME)).thenReturn(resolvedMockPath);
+		when(filesystemWrapper.getPath(ImageService.UPLOAD_ROOT, A_FILENAME)).thenReturn(resolvedMockPath);
 		mockFile = mock(File.class);
+		when(mockFile.length()).thenReturn(MOCK_FILE_SIZE);
 		when(resolvedMockPath.toFile()).thenReturn(mockFile);
 	}
 	
