@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.controllers;
+package com.lucas.learningspringboot.SpringBootSocialApp;
 
 import java.io.IOException;
 
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

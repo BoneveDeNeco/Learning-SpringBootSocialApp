@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.services;
+package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
 import com.lucas.learningspringboot.SpringBootSocialApp.FileSystemWrapper;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
-import com.lucas.learningspringboot.SpringBootSocialApp.repositories.ImageRepository;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.publisher.Flux;

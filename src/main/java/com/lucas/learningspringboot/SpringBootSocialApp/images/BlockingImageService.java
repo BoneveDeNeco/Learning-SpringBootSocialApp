@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.services;
+package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import java.time.Duration;
 import java.util.List;

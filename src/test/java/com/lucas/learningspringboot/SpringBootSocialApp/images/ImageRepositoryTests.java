@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.repositories;
+package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasProperty;
@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
 
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

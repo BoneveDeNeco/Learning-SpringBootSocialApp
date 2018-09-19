@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.repositories;
+package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;

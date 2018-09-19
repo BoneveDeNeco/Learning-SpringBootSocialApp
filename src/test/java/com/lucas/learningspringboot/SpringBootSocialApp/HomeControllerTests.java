@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.controllers;
+package com.lucas.learningspringboot.SpringBootSocialApp;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
@@ -34,9 +34,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import com.lucas.learningspringboot.SpringBootSocialApp.HomeController;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
-import com.lucas.learningspringboot.SpringBootSocialApp.controllers.HomeController;
-import com.lucas.learningspringboot.SpringBootSocialApp.services.ImageService;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

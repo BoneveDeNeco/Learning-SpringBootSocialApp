@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.repositories;
+package com.lucas.learningspringboot.SpringBootSocialApp.images;
 
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.Image;
