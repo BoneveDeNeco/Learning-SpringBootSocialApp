@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.lucas.learningspringboot.SpringBootSocialApp.comments.CommentReaderRepository;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.CommentReaderRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 
 import reactor.core.publisher.Flux;
