@@ -1,4 +1,4 @@
-package com.lucas.learningspringboot.SpringBootSocialApp.images;
+package com.lucas.learningspringboot.SpringBootSocialApp.comments;
 
 import org.springframework.data.repository.Repository;
 

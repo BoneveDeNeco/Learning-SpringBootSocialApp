@@ -1,6 +1,7 @@
 package com.lucas.learningspringboot.SpringBootSocialApp;
 
 import static org.assertj.core.api.Assertions.*;
+import static com.lucas.learningspringboot.SpringBootSocialApp.AssertionUtils.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -18,12 +19,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
@@ -32,8 +31,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import com.lucas.learningspringboot.SpringBootSocialApp.HomeController;
-import com.lucas.learningspringboot.SpringBootSocialApp.images.Comment;
-import com.lucas.learningspringboot.SpringBootSocialApp.images.CommentReaderRepository;
+import com.lucas.learningspringboot.SpringBootSocialApp.comments.Comment;
+import com.lucas.learningspringboot.SpringBootSocialApp.comments.CommentReaderRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 
@@ -196,10 +195,6 @@ public class HomeControllerTests {
 	private void setupIndexMocks() {
 		when(imageService.findAllImages()).thenReturn(AN_IMAGE_FLUX);
 		when(commentReaderRepository.findByImageId("1")).thenReturn(A_COMMENT_FLUX);
-	}
-	
-	private void assertHandlerExists(EntityExchangeResult<byte[]> response) {
-		assertThat(response.getStatus()).isNotEqualTo(HttpStatus.NOT_FOUND);
 	}
 	
 	//@Test
