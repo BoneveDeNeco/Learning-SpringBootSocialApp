@@ -31,8 +31,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import com.lucas.learningspringboot.SpringBootSocialApp.HomeController;
-import com.lucas.learningspringboot.SpringBootSocialApp.comments.Comment;
-import com.lucas.learningspringboot.SpringBootSocialApp.comments.CommentReaderRepository;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.Comment;
+import com.lucas.learningspringboot.SpringBootSocialApp.images.CommentReaderRepository;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.Image;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.ImageService;
 

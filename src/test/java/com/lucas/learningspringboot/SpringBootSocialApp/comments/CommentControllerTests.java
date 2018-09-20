@@ -10,6 +10,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +22,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
+
+import com.lucas.learningspringboot.SpringBootSocialApp.images.Comment;
 
 @RunWith(SpringRunner.class)
 @WebFluxTest(CommentController.class)
@@ -60,5 +63,10 @@ public class CommentControllerTests {
 			.body(BodyInserters.fromFormData(formData)).exchange();
 		
 		verify(rabbitTemplate).convertAndSend("learning-spring-boot", "comments.new", comment);
+	}
+	
+	@Test
+	public void keepsTrackOfNumberOfComments() {
+		
 	}
 }

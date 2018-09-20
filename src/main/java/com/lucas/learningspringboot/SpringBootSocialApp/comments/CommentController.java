@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.lucas.learningspringboot.SpringBootSocialApp.images.Comment;
+
 import reactor.core.publisher.Mono;
 
 @Controller

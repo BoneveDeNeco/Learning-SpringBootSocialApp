@@ -49,6 +49,7 @@ dependencies {
 	compileOnly('org.projectlombok:lombok')
 	
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	testCompile('org.springframework.amqp:spring-rabbit-test')
 	testCompile('io.projectreactor:reactor-test')
 	testCompile("de.flapdoodle.embed:de.flapdoodle.embed.mongo") 
 }
