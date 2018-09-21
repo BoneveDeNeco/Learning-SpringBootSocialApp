@@ -52,6 +52,7 @@ dependencies {
 	testCompile('org.springframework.amqp:spring-rabbit-test')
 	testCompile('io.projectreactor:reactor-test')
 	testCompile("de.flapdoodle.embed:de.flapdoodle.embed.mongo") 
+	testCompile('com.googlecode.junit-toolbox:junit-toolbox:2.4')
 }
 
 springBoot {

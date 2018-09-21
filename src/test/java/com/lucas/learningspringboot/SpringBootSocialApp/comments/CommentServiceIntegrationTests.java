@@ -38,8 +38,8 @@ import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
 
 @Ignore //Couldn't make it work
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {SpringBootSocialAppApplication.class, CommentServiceIntegrationTests.RabbitMqTestConfig.class})
+//@RunWith(SpringRunner.class)
+//@SpringBootTest(classes = {SpringBootSocialAppApplication.class, CommentServiceIntegrationTests.RabbitMqTestConfig.class})
 public class CommentServiceIntegrationTests {
 	
 	private static final Comment A_COMMENT = new Comment("1", "Image1", "A comment");

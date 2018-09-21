@@ -10,7 +10,7 @@ import com.lucas.learningspringboot.SpringBootSocialApp.images.Image;
 @Component
 public class InitDatabase {
 	
-	@Bean
+	//@Bean
 	CommandLineRunner init(MongoOperations operations) {
 		return args -> {
 			operations.dropCollection(Image.class);
