@@ -5,14 +5,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Component;
 
+import com.gargoylesoftware.htmlunit.javascript.host.dom.Comment;
 import com.lucas.learningspringboot.SpringBootSocialApp.images.Image;
 
 @Component
 public class InitDatabase {
 	
-	//@Bean
+	@Bean
 	CommandLineRunner init(MongoOperations operations) {
 		return args -> {
+			operations.dropCollection(Comment.class);
 			operations.dropCollection(Image.class);
 			
 			operations.insert(new Image("1", "learning-spring-boot-cover.jpg"));

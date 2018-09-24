@@ -8,13 +8,17 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @Service
 public class CommentService {
 	
 	CommentWriterRepository repository;
+	MeterRegistry meterRegistry;
 	
-	public CommentService(CommentWriterRepository repository) {
+	public CommentService(CommentWriterRepository repository, MeterRegistry meterRegistry) {
 		this.repository = repository;
+		this.meterRegistry = meterRegistry;
 	}
 	
 	@RabbitListener(id = "save", bindings = @QueueBinding(
@@ -24,7 +28,10 @@ public class CommentService {
 	))
 	public void save(Comment comment) {
 		repository.save(comment)
-		.subscribe();
+		.log("commentService-save")
+		.subscribe(savedComment ->
+			meterRegistry.counter("comments.consumed", "imageId", savedComment.getImageId())
+				.increment());
 	}
 	
 	@Bean
