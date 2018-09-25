@@ -40,6 +40,6 @@ public class CommentServiceTests {
 		
 		assertThat(meterRegistry.counter("comments.consumed", "imageId", A_COMMENT.getImageId()).count())
 			.isEqualTo(1.0);
-		meterRegistry.close();
+		//meterRegistry.close();
 	}
 }

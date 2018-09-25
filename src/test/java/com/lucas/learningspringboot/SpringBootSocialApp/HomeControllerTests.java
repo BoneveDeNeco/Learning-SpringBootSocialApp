@@ -84,7 +84,7 @@ public class HomeControllerTests {
 	@Test
 	public void getImageHandlerAnswersWithJpegContentType() throws IOException {
 		webTestClient.get().uri(GET_IMAGE_PATH).exchange()
-			.expectHeader().contentType(MediaType.IMAGE_JPEG_VALUE);
+			.expectHeader().contentType(MediaType.IMAGE_JPEG);
 	}
 	
 	@Test

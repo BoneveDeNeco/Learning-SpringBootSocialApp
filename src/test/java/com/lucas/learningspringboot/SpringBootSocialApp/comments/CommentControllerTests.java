@@ -4,17 +4,27 @@ import static org.assertj.core.api.Assertions.*;
 import static com.lucas.learningspringboot.SpringBootSocialApp.AssertionUtils.*;
 import static org.mockito.Mockito.*;
 
+import java.util.concurrent.BlockingQueue;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.metrics.export.simple.SimpleMetricsExportAutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
+import org.springframework.boot.autoconfigure.cloud.CloudAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.stream.messaging.Source;
+import org.springframework.cloud.stream.test.binder.MessageCollector;
+import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfiguration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.messaging.Message;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
@@ -30,7 +40,8 @@ import reactor.core.publisher.Mono;
 @RunWith(SpringRunner.class)
 @WebFluxTest(CommentController.class)
 @ImportAutoConfiguration({ThymeleafAutoConfiguration.class, 
-	MetricsAutoConfiguration.class, SimpleMetricsExportAutoConfiguration.class //MeterRegistry
+	MetricsAutoConfiguration.class //MeterRegistry
+	//, CloudAutoConfiguration.class, RabbitAutoConfiguration.class, MessageSourceAutoConfiguration.class
 })
 public class CommentControllerTests {
 	
@@ -43,6 +54,9 @@ public class CommentControllerTests {
 	
 	@MockBean
 	RabbitTemplate rabbitTemplate;
+	
+	@MockBean
+	CommentMessageSender sender;
 	
 	@Test
 	public void handlesPostRequesToAddComment() {
@@ -58,17 +72,17 @@ public class CommentControllerTests {
 	}
 	
 	@Test
-	public void addCommentHandlersPublishesCommentWithRabbitTemplate() {
+	public void addCommentHandlersPublishesComment() {
 		postComment(A_COMMENT);
 		
-		verify(rabbitTemplate).convertAndSend("learning-spring-boot", "comments.new", A_COMMENT);
+		verify(sender).send(A_COMMENT);
 	}
 	
 	@Test
 	public void keepsTrackOfNumberOfCommentsProduced() {
 		//MeterRegistry persists count throughout the tests, making the count uncertain. This test needs a brand new MeterRegistry
 		MeterRegistry meterRegistry = new SimpleMeterRegistry();
-		CommentController controller = new CommentController(rabbitTemplate, meterRegistry);
+		CommentController controller = new CommentController(rabbitTemplate, meterRegistry, sender);
 		
 		controller.addComment(Mono.just(A_COMMENT)).subscribe();
 		

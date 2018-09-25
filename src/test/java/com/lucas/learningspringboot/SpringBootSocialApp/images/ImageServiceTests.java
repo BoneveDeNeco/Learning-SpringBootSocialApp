@@ -132,7 +132,8 @@ public class ImageServiceTests {
 		Mono<Void> handle = imageService.createImage(files);
 		handle.subscribe();
 		
-		assertThat(meterRegistry.get("files.uploaded.bytes").summary().takeSnapshot().total(), is((double)MOCK_FILE_SIZE));
+		//assertThat(meterRegistry.get("files.uploaded.bytes").summary().takeSnapshot().total(), is((double)MOCK_FILE_SIZE));
+		assertThat(meterRegistry.summary("files.uploaded.bytes").totalAmount(), is((double)MOCK_FILE_SIZE));
 	}
 	
 	private void setupMocksForFileCreation() {

@@ -1,7 +1,7 @@
 buildscript {
 	ext {
-		springBootVersion = '2.0.5.BUILD-SNAPSHOT'
-		//springBootVersion = '2.0.0.M5'
+		//springBootVersion = '2.0.1.RELEASE'
+		springBootVersion = '2.0.0.M5'
 	}
 	repositories {
 		mavenCentral()
@@ -26,7 +26,11 @@ apply plugin: 'io.spring.dependency-management'
 apply plugin: 'io.franzbecker.gradle-lombok' //Needed to make Lombok work with Eclipse
 
 group = 'com.lucas.learningspringboot'
-version = '0.0.1-SNAPSHOT'
+
+jar {
+	baseName = 'learning-spring-boot'
+	version = '0.0.1-SNAPSHOT'
+}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -44,8 +48,11 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	compile('org.springframework.boot:spring-boot-starter-webflux')
 	compile('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
-	compile('org.springframework.boot:spring-boot-starter-amqp')
 	compile('org.springframework.boot:spring-boot-starter-actuator')
+	
+	compile('org.springframework.cloud:spring-cloud-starter-stream-rabbit')
+	compile('org.springframework.cloud:spring-cloud-stream-reactive')
+	
 	compile('org.synchronoss.cloud:nio-multipart-parser:1.1.0')
 	compile("org.seleniumhq.selenium:htmlunit-driver")
 	compile("org.seleniumhq.selenium:selenium-java")
@@ -54,7 +61,8 @@ dependencies {
 	compileOnly('org.projectlombok:lombok')
 	
 	testCompile('org.springframework.boot:spring-boot-starter-test')
-	testCompile('org.springframework.amqp:spring-rabbit-test')
+	//testCompile('org.springframework.amqp:spring-rabbit-test')
+	testCompile('org.springframework.cloud:spring-cloud-stream-test-support')
 	testCompile('io.projectreactor:reactor-test')
 	testCompile("de.flapdoodle.embed:de.flapdoodle.embed.mongo") 
 	testCompile('com.googlecode.junit-toolbox:junit-toolbox:2.4')
@@ -62,4 +70,17 @@ dependencies {
 
 springBoot {
 	buildInfo()
+}
+
+ext {
+	//springCloudVersion = 'Finchley.SR1'
+	springCloudVersion = 'Finchley.M3'
+	springCloudStreamVersion = 'Elmhurst.M2'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "org.springframework.cloud:spring-cloud-stream-dependencies:${springCloudStreamVersion}"
+	}
 }

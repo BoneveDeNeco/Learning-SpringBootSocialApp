@@ -20,10 +20,10 @@ import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.PublisherCallbackChannel.Listener;
-import org.springframework.amqp.rabbit.test.RabbitListenerTest;
-import org.springframework.amqp.rabbit.test.RabbitListenerTestHarness;
-import org.springframework.amqp.rabbit.test.TestRabbitTemplate;
-import org.springframework.amqp.rabbit.test.mockito.LatchCountDownAndCallRealMethodAnswer;
+//import org.springframework.amqp.rabbit.test.RabbitListenerTest;
+//import org.springframework.amqp.rabbit.test.RabbitListenerTestHarness;
+//import org.springframework.amqp.rabbit.test.TestRabbitTemplate;
+//import org.springframework.amqp.rabbit.test.mockito.LatchCountDownAndCallRealMethodAnswer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
 //@SpringBootTest(classes = {SpringBootSocialAppApplication.class, CommentServiceIntegrationTests.RabbitMqTestConfig.class})
 public class CommentServiceIntegrationTests {
 	
-	private static final Comment A_COMMENT = new Comment("1", "Image1", "A comment");
+	/*private static final Comment A_COMMENT = new Comment("1", "Image1", "A comment");
 	
 	@Autowired
 	RabbitListenerTestHarness harness;
@@ -51,7 +51,7 @@ public class CommentServiceIntegrationTests {
 	RabbitTemplate rabbitTemplate;
 	
 	@MockBean
-	CommentWriterRepository repository/* = mock(CommentWriterRepository.class)*/;
+	CommentWriterRepository repository = mock(CommentWriterRepository.class);
 	
 	@Test
 	public void listensForMessagesForSavingComment() throws IOException {
@@ -74,7 +74,7 @@ public class CommentServiceIntegrationTests {
 		@Autowired
 		CommentService service;
 	}
-
+*/
 }
 /*
 Try with TestRabbitTemplate didn't work out as expected, it is too limited
