@@ -43,6 +43,11 @@ repositories {
 	maven { url "https://dl.bintray.com/rabbitmq/maven-milestones/" }
 }
 
+configurations {
+	all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+//	all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-validation'
+	all*.exclude group: 'org.springframework', module: 'spring-webmvc'
+}
 
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')

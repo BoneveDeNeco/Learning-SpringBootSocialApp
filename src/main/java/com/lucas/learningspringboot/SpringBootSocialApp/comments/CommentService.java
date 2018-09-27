@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class CommentService {
@@ -21,21 +23,13 @@ public class CommentService {
 		this.meterRegistry = meterRegistry;
 	}
 	
-	@RabbitListener(id = "save", bindings = @QueueBinding(
-		value = @Queue,
-		exchange = @Exchange(value = "learning-spring-boot"),
-		key = "comments.new"
-	))
-	public void save(Comment comment) {
-		repository.save(comment)
+	public Flux<Void> save(Flux<Comment> comments) {
+		return repository.saveAll(comments)
 		.log("commentService-save")
-		.subscribe(savedComment ->
+		.flatMap(savedComment -> {
 			meterRegistry.counter("comments.consumed", "imageId", savedComment.getImageId())
-				.increment());
-	}
-	
-	@Bean
-	Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
-		return new Jackson2JsonMessageConverter();
+				.increment();
+			return Mono.empty();
+		});
 	}
 }

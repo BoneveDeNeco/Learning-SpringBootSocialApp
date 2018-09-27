@@ -1,0 +1,36 @@
+logging:
+    level:
+        com:
+            lucas: DEBUG
+        org:
+            springframework:
+                data: TRACE
+            reactor:
+                core: TRACE
+                util: TRACE
+endpoints:
+    default:
+        web:
+            enabled: true
+    health:
+        sensitive:false
+management:
+    endpoints:
+        web:
+            exposure:
+                include: info,health,beans,conditions,metrics
+        health:
+            show-details: ALWAYS
+    security:
+        enabled: false
+
+spring:
+    cloud:
+        stream:
+            bindings:
+                input:
+                    destination: learning-spring-boot-comments
+                    group: learning-spring-boot
+                output:
+                    destination: learning-spring-boot-comments
+                    group: learning-spring-boot
